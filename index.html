@@ -263,7 +263,7 @@
     <script type="text/babel" data-type="module">
       const { useState, useCallback, useEffect, useRef } = React;
 
-      const WEBSOCKET_URL = `ws://${window.location.host}`;
+      const WEBSOCKET_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
       const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
       
       const QUALITY_PRESETS = {
