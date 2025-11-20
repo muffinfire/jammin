@@ -346,11 +346,13 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                     break;
 
                 case 'update-recording':
-                    setRecordings(prev => prev.map(r => r.id === data.recordingId ? { ...r, name: data.newName } : r));
+                    setRecordings(prev => prev.map(rec =>
+                        rec.id === data.recordingId ? { ...rec, name: data.newName } : rec
+                    ));
                     break;
 
                 case 'delete-recording':
-                    setRecordings(prev => prev.filter(r => r.id !== data.recordingId));
+                    setRecordings(prev => prev.filter(rec => rec.id !== data.recordingId));
                     break;
             }
         };
