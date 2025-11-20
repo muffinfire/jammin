@@ -246,9 +246,20 @@ wss.on('connection', (ws) => {
 
               console.log(`Selected longest recording: ${longestRecording.myDuration}s from ${longestRecording.username}`);
 
+              // Generate short name: Rec-Initials-Time
+              const date = new Date();
+              const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).toLowerCase().replace(/\s/g, '');
+
+              // Get initials from username (e.g. "Adam Baumgartner" -> "AB", "Dave" -> "D")
+              const creatorName = longestRecording.username || 'Unknown';
+              const initials = creatorName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+
+              const shortName = `Rec-${initials}-${timeStr}`;
+
               // Create the final recording with consistent ID
               const finalRecording = {
                 id: room.currentRecordingId,
+                name: shortName, // Set the default name
                 audioData: longestRecording.audioData,
                 duration: longestRecording.totalDuration,
                 timestamp: new Date().toLocaleString(),
@@ -268,7 +279,7 @@ wss.on('connection', (ws) => {
               // Clear pending
               room.pendingRecordings = [];
 
-              console.log(`Recording ${finalRecording.id} finalized and broadcast`);
+              console.log(`Recording ${finalRecording.id} (${shortName}) finalized and broadcast`);
             }
           }, 2000); // Wait 2 seconds for all submissions
         }
@@ -305,8 +316,7 @@ wss.on('connection', (ws) => {
         if (room) {
           const rec = room.recordings.find(r => r.id === data.id);
           if (rec) {
-            rec.id = data.newName; // Ideally we'd have a separate display name, but ID works for now if unique
-            // Or better, add a name field
+            // rec.id = data.newName; // DON'T change the ID, it breaks future lookups
             rec.name = data.newName;
 
             broadcast(room, {
