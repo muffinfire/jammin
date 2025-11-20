@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 
 const Chat = ({ messages, onSendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
+    const messagesContainerRef = useRef(null);
+
     const scrollToBottom = () => {
         if (messagesContainerRef.current) {
             const container = messagesContainerRef.current;
