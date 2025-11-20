@@ -60,26 +60,29 @@ const Home = ({ onJoin, onCreate }) => {
                     </button>
                 </div>
 
-                {mode === 'join' && (
-                    <div className="form-row">
-                        <input
-                            type="text"
-                            value={joinCode}
-                            onChange={(e) => setJoinCode(e.target.value)}
-                            placeholder="Session Code"
-                            className="input-field"
-                            required
-                        />
-                    </div>
-                )}
+                <div className="dynamic-form-content">
+                    {mode === 'join' && (
+                        <div className="form-row">
+                            <input
+                                type="text"
+                                value={joinCode}
+                                onChange={(e) => setJoinCode(e.target.value)}
+                                placeholder="Session Code"
+                                className="input-field"
+                                required
+                            />
+                        </div>
+                    )}
 
-                <button
-                    type="submit"
-                    className="btn-primary btn-large"
-                    disabled={!username.trim() || (mode === 'join' && !joinCode.trim())}
-                >
-                    {mode === 'create' ? 'CREATE' : 'JOIN'}
-                </button>
+                    <button
+                        type="submit"
+                        className="btn-primary btn-large"
+                        style={{ width: '100%' }}
+                        disabled={!username.trim() || (mode === 'join' && !joinCode.trim())}
+                    >
+                        {mode === 'create' ? 'CREATE' : 'JOIN'}
+                    </button>
+                </div>
             </form>
         </div>
     );

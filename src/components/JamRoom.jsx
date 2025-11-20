@@ -397,33 +397,65 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
         URL.revokeObjectURL(url);
     };
 
+    const handleSendMessage = (message) => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'chat', message }));
+        } else {
+            console.warn("WebSocket is not open. Cannot send message.");
+        }
+    };
+
     const handleCopyLink = () => {
         const link = `${window.location.origin}?room=${sessionCode}`;
         navigator.clipboard.writeText(link);
         setCopyLinkText('COPIED');
-        setTimeout(() => setCopyLinkText('COPY LINK'), 5000);
+        setTimeout(() => setCopyLinkText('COPY LINK'), 2000);
     };
 
     const startEditing = (rec) => {
         setEditingNameId(rec.id);
-        setTempName(rec.name || rec.id);
+        setTempName(rec.name || `Recording ${rec.id}`);
     };
 
     const saveName = (id) => {
-        if (tempName.trim() && wsRef.current) {
-            wsRef.current.send(JSON.stringify({ type: 'rename-recording', id, newName: tempName.trim() }));
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'rename-recording', recordingId: id, newName: tempName }));
         }
         setEditingNameId(null);
     };
+
+    const deleteRecording = (id) => {
+        if (confirm('Are you sure you want to delete this recording?')) {
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({ type: 'delete-recording', recordingId: id }));
+            }
+        }
+    };
+
+    const kickUser = (userId) => {
+        if (confirm('Kick this user?')) {
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({ type: 'kick-user', userId }));
+            }
+        }
+    };
+
+    if (!hostConnected && !isHost) {
+        return (
+            <div className="container" style={{ textAlign: 'center', marginTop: '2rem' }}>
+                <h2>Waiting for host...</h2>
+                <p>The host has disconnected. Please wait for them to rejoin.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="jam-room-container">
             <div className="card-header">
                 <div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>SESSION CODE</div>
-                    <div className="session-code-container">
-                        <span className="session-code">{sessionCode}</span>
-                        <button onClick={handleCopyLink} className="btn-copy-link">{copyLinkText}</button>
+                    <div className="session-code-container" onClick={handleCopyLink} style={{ cursor: 'pointer' }}>
+                        <span className="session-code">{copyLinkText === 'COPIED' ? 'COPIED!' : sessionCode}</span>
                     </div>
                 </div>
                 <button onClick={onLeave} className="btn-danger">LEAVE</button>

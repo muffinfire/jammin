@@ -21,8 +21,10 @@
 
 html,
 body {
-  overflow-x: hidden;
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
 body {
@@ -40,7 +42,9 @@ body {
 #root {
   width: 100%;
   max-width: 700px;
-  padding: 2rem 1.5rem;
+  padding: 4rem 1.5rem 2rem;
+  /* Increased top padding */
+  overflow-x: hidden;
 }
 
 /* Typography */
@@ -74,7 +78,8 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  /* Changed from center to flex-start */
   min-height: 80vh;
   width: 100%;
   max-width: 450px;
@@ -94,10 +99,21 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  position: relative;
+  /* For stable layout */
 }
 
 .form-row {
   width: 100%;
+}
+
+/* Fixed height container for dynamic content to prevent shifting */
+.dynamic-form-content {
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 1.25rem;
 }
 
 .form-mode-toggle {
