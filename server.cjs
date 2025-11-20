@@ -248,7 +248,7 @@ wss.on('connection', (ws) => {
 
               // Generate short name: Rec-Initials-Time
               const date = new Date();
-              const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).toLowerCase().replace(/\s/g, '');
+              const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).toUpperCase().replace(/\s/g, '');
 
               // Get first two letters of the first name (e.g. "Adam" -> "AD", "Adam Baumgartner" -> "AD")
               const creatorName = longestRecording.username || 'Unknown';
