@@ -76,6 +76,7 @@ wss.on('connection', (ws) => {
     let data;
     try {
       data = JSON.parse(message);
+      console.log(`Received message type: ${data.type} from ${clientId} in room ${clients.get(ws)?.room || 'none'}`);
     } catch (e) {
       console.error('Invalid JSON:', e);
       return;
@@ -97,16 +98,25 @@ wss.on('connection', (ws) => {
         clientInfo.username = username;
 
         if (!rooms.has(newRoomCode)) {
+          console.log(`Creating new room: ${newRoomCode}`);
           rooms.set(newRoomCode, {
             clients: new Set(),
             recordingState: 'idle',
             recordingStartTime: null,
             participants: {},
             recordings: [],
+            messages: [], // Ensure messages array is initialized
             currentRecordingId: null,
             pendingRecordings: [],
             hostId: isHost ? clientId : null,
           });
+        } else {
+          console.log(`Joining existing room: ${newRoomCode}`);
+          // Ensure messages array exists for existing rooms (backward compatibility/safety)
+          const room = rooms.get(newRoomCode);
+          if (!room.messages) {
+            room.messages = [];
+          }
         }
 
         const newRoom = rooms.get(newRoomCode);
@@ -139,6 +149,7 @@ wss.on('connection', (ws) => {
           .filter(id => id);
 
         // Notify others about new user
+        console.log(`Broadcasting user-joined for ${clientId} (${username}) to room ${newRoomCode}`);
         broadcast(newRoom, {
           type: 'user-joined',
           id: clientId,
@@ -271,7 +282,12 @@ wss.on('connection', (ws) => {
             message: data.message,
             timestamp: Date.now()
           };
+
+          if (!room.messages) {
+            room.messages = [];
+          }
           room.messages.push(chatMessage);
+
           broadcast(room, {
             type: 'chat',
             ...chatMessage
