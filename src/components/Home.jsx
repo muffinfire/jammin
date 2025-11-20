@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Home = ({ onJoin, onCreate }) => {
     const [joinCode, setJoinCode] = useState('');
     const [username, setUsername] = useState('');
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const room = params.get('room');
+        if (room) {
+            setJoinCode(room);
+        }
+    }, []);
 
     const handleJoinSubmit = (e) => {
         e.preventDefault();
@@ -19,50 +27,46 @@ const Home = ({ onJoin, onCreate }) => {
     };
 
     return (
-        <div>
-            <form onSubmit={handleCreateSubmit}>
-                <div className="form-group">
-                    <label>Your Name</label>
-                    <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="ENTER NAME"
-                        required
-                    />
-                </div>
-                <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={!username.trim()}>
-                    Create New Session
-                </button>
-            </form>
+        <div className="home-container">
+            <h1 className="title">JAM SESSION</h1>
 
-            <div className="divider">OR</div>
+            <div className="form-group">
+                <label>YOUR NAME</label>
+                <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="ENTER NAME"
+                    className="input-field"
+                />
+            </div>
 
-            <form onSubmit={handleJoinSubmit}>
-                <div className="form-group">
-                    <label>Your Name</label>
-                    <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="ENTER NAME"
-                        required
-                    />
+            <div className="actions-container">
+                <div className="action-box">
+                    <h3>JOIN SESSION</h3>
+                    <form onSubmit={handleJoinSubmit}>
+                        <input
+                            type="text"
+                            value={joinCode}
+                            onChange={(e) => setJoinCode(e.target.value)}
+                            placeholder="SESSION CODE"
+                            className="input-field"
+                        />
+                        <button type="submit" className="btn-secondary" disabled={!joinCode.trim() || !username.trim()}>
+                            JOIN
+                        </button>
+                    </form>
                 </div>
-                <div className="form-group">
-                    <label>Session Code</label>
-                    <input
-                        type="text"
-                        value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value)}
-                        placeholder="ENTER 6-DIGIT CODE"
-                        required
-                    />
+
+                <div className="divider-vertical">OR</div>
+
+                <div className="action-box">
+                    <h3>NEW SESSION</h3>
+                    <button onClick={handleCreateSubmit} className="btn-primary" disabled={!username.trim()}>
+                        CREATE
+                    </button>
                 </div>
-                <button type="submit" className="btn-secondary" style={{ width: '100%' }} disabled={!joinCode.trim() || !username.trim()}>
-                    Join Session
-                </button>
-            </form>
+            </div>
         </div>
     );
 };

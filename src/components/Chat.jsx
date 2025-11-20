@@ -28,9 +28,6 @@ const Chat = ({ messages, onSendMessage }) => {
                     <div key={idx} className="chat-message">
                         <span className="chat-username">{msg.username}:</span>
                         <span>{msg.message}</span>
-                        <span className="chat-timestamp">
-                            {new Date(msg.timestamp).toLocaleTimeString()}
-                        </span>
                     </div>
                 ))}
                 <div ref={messagesEndRef} />

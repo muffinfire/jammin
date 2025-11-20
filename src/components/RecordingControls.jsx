@@ -19,13 +19,13 @@ const RecordingControls = ({
 
     return (
         <div className="recording-controls">
-            <div style={{ marginBottom: '1rem' }}>
-                <label>Recording Quality</label>
+            <div className="control-group">
+                <label>QUALITY</label>
                 <select
                     value={audioQuality}
                     onChange={(e) => setAudioQuality(e.target.value)}
                     disabled={recordingState === 'recording'}
-                    style={{ maxWidth: '300px', margin: '0 auto', display: 'block' }}
+                    className="quality-select"
                 >
                     {Object.entries(QUALITY_PRESETS).map(([key, preset]) => (
                         <option key={key} value={key}>{preset.label}</option>
@@ -33,17 +33,19 @@ const RecordingControls = ({
                 </select>
             </div>
 
-            {recordingState === 'recording' ? (
-                <button onClick={onStopRecording} className="btn-danger">
-                    <span className="recording-indicator"></span>
-                    Stop Recording
-                </button>
-            ) : (
-                <button onClick={onStartRecording} className="btn-success">
-                    Start Recording
-                </button>
-            )}
-            <div className="timer">{formatTime(recordingTime)}</div>
+            <div className="control-actions">
+                {recordingState === 'recording' ? (
+                    <button onClick={onStopRecording} className="btn-danger btn-large">
+                        <span className="recording-indicator"></span>
+                        STOP
+                    </button>
+                ) : (
+                    <button onClick={onStartRecording} className="btn-success btn-large">
+                        ● REC
+                    </button>
+                )}
+                <div className="timer-display">{formatTime(recordingTime)}</div>
+            </div>
         </div>
     );
 };

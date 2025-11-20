@@ -330,11 +330,37 @@ wss.on('connection', (ws) => {
           }
 
           if (targetWs) {
-            // Add to banned list (simple implementation)
+            targetWs.send(JSON.stringify({ type: 'kicked' }));
+            targetWs.close(1000, 'Kicked by host');
+          }
+        }
+        break;
+      }
+
+      case 'ban-user': {
+        if (room) {
+          // Verify requester is host
+          if (room.hostId !== clientId) return;
+
+          const targetId = data.targetId;
+          if (targetId === room.hostId) return; // Can't ban host
+
+          // Find the client WS
+          let targetWs = null;
+          for (const clientWs of room.clients) {
+            const info = clients.get(clientWs);
+            if (info && info.id === targetId) {
+              targetWs = clientWs;
+              break;
+            }
+          }
+
+          if (targetWs) {
+            // Add to banned list
             room.bannedIds.add(targetId);
 
             targetWs.send(JSON.stringify({ type: 'kicked' }));
-            targetWs.close(1000, 'Kicked by host');
+            targetWs.close(1000, 'Banned by host');
           }
         }
         break;

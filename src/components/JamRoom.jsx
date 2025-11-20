@@ -19,6 +19,8 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
     const [messages, setMessages] = useState([]);
     const [hostId, setHostId] = useState(null);
     const [hostConnected, setHostConnected] = useState(false);
+    const [editingNameId, setEditingNameId] = useState(null);
+    const [tempName, setTempName] = useState('');
 
     const wsRef = useRef(null);
     const pingIntervalRef = useRef(null);
@@ -99,7 +101,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
     };
 
     const audioBufferToWav = (buffer) => {
-        const length = buffer.length * buffer.numberOfChannels * 2;
+        const length = buffer.length * buffer.numberOfChannels * 3; // 24-bit = 3 bytes
         const arrayBuffer = new ArrayBuffer(44 + length);
         const view = new DataView(arrayBuffer);
         const channels = [];
@@ -117,9 +119,9 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
         setUint16(1); // PCM
         setUint16(buffer.numberOfChannels);
         setUint32(buffer.sampleRate);
-        setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels);
-        setUint16(buffer.numberOfChannels * 2);
-        setUint16(16); // 16-bit
+        setUint32(buffer.sampleRate * 3 * buffer.numberOfChannels); // 24-bit byte rate
+        setUint16(buffer.numberOfChannels * 3); // Block align
+        setUint16(24); // 24-bit
         setUint32(0x61746164); // "data"
         setUint32(length);
 
@@ -130,9 +132,14 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
         while (pos < arrayBuffer.byteLength) {
             for (let i = 0; i < buffer.numberOfChannels; i++) {
                 let sample = Math.max(-1, Math.min(1, channels[i][offset]));
-                sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-                view.setInt16(pos, sample, true);
-                pos += 2;
+                // 24-bit conversion
+                sample = sample < 0 ? sample * 0x800000 : sample * 0x7FFFFF;
+                const intSample = Math.floor(sample);
+
+                view.setUint8(pos, intSample & 0xFF);
+                view.setUint8(pos + 1, (intSample >> 8) & 0xFF);
+                view.setUint8(pos + 2, (intSample >> 16) & 0xFF);
+                pos += 3;
             }
             offset++;
         }
@@ -385,12 +392,33 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
         URL.revokeObjectURL(url);
     };
 
+    const handleCopyLink = () => {
+        const link = `${window.location.origin}?room=${sessionCode}`;
+        navigator.clipboard.writeText(link);
+        alert('Link copied to clipboard!');
+    };
+
+    const startEditing = (rec) => {
+        setEditingNameId(rec.id);
+        setTempName(rec.name || rec.id);
+    };
+
+    const saveName = (id) => {
+        if (tempName.trim() && wsRef.current) {
+            wsRef.current.send(JSON.stringify({ type: 'rename-recording', id, newName: tempName.trim() }));
+        }
+        setEditingNameId(null);
+    };
+
     return (
-        <div>
+        <div className="jam-room-container">
             <div className="card-header">
                 <div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>SESSION CODE</div>
-                    <div className="session-code">{sessionCode}</div>
+                    <div className="session-code-container">
+                        <span className="session-code">{sessionCode}</span>
+                        <button onClick={handleCopyLink} className="btn-icon" title="Copy Link">🔗</button>
+                    </div>
                 </div>
                 <button onClick={onLeave} className="btn-danger">LEAVE</button>
             </div>
@@ -411,7 +439,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                     <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600 }}>
                             {username} (You)
-                            {isHost && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--success-color)' }}>[HOST]</span>}
+                            {isHost && <span className="host-badge">[HOST]</span>}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                             <span className={`status-dot ${hostConnected ? 'connected' : 'disconnected'}`}></span>
@@ -429,7 +457,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 600 }}>
                                     {name}
-                                    {isThisUserHost && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--success-color)' }}>[HOST]</span>}
+                                    {isThisUserHost && <span className="host-badge">[HOST]</span>}
                                 </div>
                                 {stream && <ParticipantAudio stream={stream} />}
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -438,12 +466,20 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                                 </div>
                             </div>
                             {isHost && !isThisUserHost && (
-                                <button
-                                    className="btn-danger btn-small"
-                                    onClick={() => wsRef.current && wsRef.current.send(JSON.stringify({ type: 'kick-user', targetId: id }))}
-                                >
-                                    KICK
-                                </button>
+                                <div className="admin-controls">
+                                    <button
+                                        className="btn-danger btn-small"
+                                        onClick={() => wsRef.current && wsRef.current.send(JSON.stringify({ type: 'kick-user', targetId: id }))}
+                                    >
+                                        KICK
+                                    </button>
+                                    <button
+                                        className="btn-danger btn-small"
+                                        onClick={() => wsRef.current && wsRef.current.send(JSON.stringify({ type: 'ban-user', targetId: id }))}
+                                    >
+                                        BAN
+                                    </button>
+                                </div>
                             )}
                         </div>
                     );
@@ -464,15 +500,27 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                             <div key={rec.id} className="recording-item">
                                 <div style={{ width: '100%' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                        <div style={{ fontWeight: 600 }}>
-                                            {rec.name || rec.id}
-                                            <button className="btn-icon" onClick={() => {
-                                                const newName = prompt('RENAME:', rec.name || rec.id);
-                                                if (newName && wsRef.current) wsRef.current.send(JSON.stringify({ type: 'rename-recording', id: rec.id, newName }));
-                                            }}>✏️</button>
-                                            <button className="btn-icon" style={{ color: 'var(--danger-color)' }} onClick={() => {
-                                                if (confirm('DELETE?') && wsRef.current) wsRef.current.send(JSON.stringify({ type: 'delete-recording', id: rec.id }));
-                                            }}>🗑️</button>
+                                        <div style={{ fontWeight: 600, flex: 1 }}>
+                                            {editingNameId === rec.id ? (
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <input
+                                                        type="text"
+                                                        value={tempName}
+                                                        onChange={(e) => setTempName(e.target.value)}
+                                                        className="input-field-small"
+                                                    />
+                                                    <button onClick={() => saveName(rec.id)} className="btn-success btn-small">✓</button>
+                                                    <button onClick={() => setEditingNameId(null)} className="btn-danger btn-small">✕</button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {rec.name || `rec-${new Date(rec.timestamp || Date.now()).toLocaleTimeString().replace(/:/g, '')}`}
+                                                    <button className="btn-icon" onClick={() => startEditing(rec)}>✏️</button>
+                                                    <button className="btn-icon" style={{ color: 'var(--danger-color)' }} onClick={() => {
+                                                        if (confirm('DELETE?') && wsRef.current) wsRef.current.send(JSON.stringify({ type: 'delete-recording', id: rec.id }));
+                                                    }}>🗑️</button>
+                                                </>
+                                            )}
                                         </div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                             {Math.floor(rec.duration / 60)}:{String(rec.duration % 60).padStart(2, '0')}
@@ -482,7 +530,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                                     {url && (
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                                             <button onClick={() => handleDownload(rec, 'webm')} className="btn-primary btn-small">WEBM</button>
-                                            <button onClick={() => handleDownload(rec, 'wav')} className="btn-secondary btn-small">WAV</button>
+                                            <button onClick={() => handleDownload(rec, 'wav')} className="btn-secondary btn-small">WAV (24-bit)</button>
                                         </div>
                                     )}
                                 </div>
