@@ -21,26 +21,30 @@ const Chat = ({ messages, onSendMessage }) => {
     };
 
     return (
-        <div className="card chat-container">
-            <h3>Chat</h3>
+        <div className="card chat-card">
+            <h3>CHAT</h3>
             <div className="chat-messages">
-                {messages.map((msg, idx) => (
-                    <div key={idx} className="chat-message">
-                        <span className="chat-username">{msg.username}:</span>
-                        <span>{msg.message}</span>
-                    </div>
-                ))}
+                {messages.length === 0 ? (
+                    <div className="chat-empty">No messages yet</div>
+                ) : (
+                    messages.map((msg, idx) => (
+                        <div key={idx} className="chat-message">
+                            <span className="chat-username">{msg.username}</span>
+                            <span className="chat-text">{msg.message}</span>
+                        </div>
+                    ))
+                )}
                 <div ref={messagesEndRef} />
             </div>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
+            <form onSubmit={handleSubmit} className="chat-input-form">
                 <input
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type a message..."
-                    style={{ flex: 1 }}
+                    className="chat-input"
                 />
-                <button type="submit" className="btn-primary btn-small">Send</button>
+                <button type="submit" className="btn-primary">SEND</button>
             </form>
         </div>
     );

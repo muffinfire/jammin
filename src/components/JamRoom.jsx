@@ -395,7 +395,6 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
     const handleCopyLink = () => {
         const link = `${window.location.origin}?room=${sessionCode}`;
         navigator.clipboard.writeText(link);
-        alert('Link copied to clipboard!');
     };
 
     const startEditing = (rec) => {
@@ -467,12 +466,6 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                             </div>
                             {isHost && !isThisUserHost && (
                                 <div className="admin-controls">
-                                    <button
-                                        className="btn-danger btn-small"
-                                        onClick={() => wsRef.current && wsRef.current.send(JSON.stringify({ type: 'kick-user', targetId: id }))}
-                                    >
-                                        KICK
-                                    </button>
                                     <button
                                         className="btn-danger btn-small"
                                         onClick={() => wsRef.current && wsRef.current.send(JSON.stringify({ type: 'kick-user', targetId: id }))}
