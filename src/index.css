@@ -525,8 +525,7 @@ button:active {
 .chat-card {
   display: flex;
   flex-direction: column;
-  min-height: 400px;
-  max-height: 500px;
+  height: 400px;
 }
 
 .chat-messages {
@@ -537,7 +536,6 @@ button:active {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  min-height: 200px;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -570,7 +568,7 @@ button:active {
   display: flex;
   gap: 0.5rem;
   padding: 0.375rem 0;
-  line-height: 1.5;
+  line-height: 0.3;
 }
 
 .chat-username {
@@ -617,6 +615,22 @@ button:active {
 
 .chat-input::placeholder {
   color: var(--text-secondary);
+}
+
+.btn-copy-link {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-copy-link:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
 }
 
 /* Empty State */

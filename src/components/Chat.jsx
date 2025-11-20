@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 const Chat = ({ messages, onSendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
 
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
@@ -11,7 +12,17 @@ const Chat = ({ messages, onSendMessage }) => {
     };
 
     useEffect(() => {
-        scrollToBottom();
+        if (messages.length === 0) return; // Don't scroll on initial load
+
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        // Only auto-scroll if user is near the bottom (within 100px)
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+
+        if (isNearBottom) {
+            scrollToBottom();
+        }
     }, [messages]);
 
     const handleSubmit = (e) => {
@@ -44,7 +55,7 @@ const Chat = ({ messages, onSendMessage }) => {
     return (
         <div className="card chat-card">
             <h3>CHAT</h3>
-            <div className="chat-messages">
+            <div className="chat-messages" ref={messagesContainerRef}>
                 {messages.length === 0 ? (
                     <div className="chat-empty">No messages yet</div>
                 ) : (

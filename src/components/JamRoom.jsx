@@ -21,6 +21,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
     const [hostConnected, setHostConnected] = useState(false);
     const [editingNameId, setEditingNameId] = useState(null);
     const [tempName, setTempName] = useState('');
+    const [copyLinkText, setCopyLinkText] = useState('COPY LINK');
 
     const wsRef = useRef(null);
     const pingIntervalRef = useRef(null);
@@ -395,6 +396,8 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
     const handleCopyLink = () => {
         const link = `${window.location.origin}?room=${sessionCode}`;
         navigator.clipboard.writeText(link);
+        setCopyLinkText('COPIED');
+        setTimeout(() => setCopyLinkText('COPY LINK'), 5000);
     };
 
     const startEditing = (rec) => {
@@ -416,7 +419,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>SESSION CODE</div>
                     <div className="session-code-container">
                         <span className="session-code">{sessionCode}</span>
-                        <button onClick={handleCopyLink} className="btn-icon" title="Copy Link">COPY LINK</button>
+                        <button onClick={handleCopyLink} className="btn-copy-link">{copyLinkText}</button>
                     </div>
                 </div>
                 <button onClick={onLeave} className="btn-danger">LEAVE</button>
@@ -438,7 +441,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                     <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600 }}>
                             {username} (You)
-                            {isHost && <span className="host-badge">[HOST]</span>}
+                            {isHost && <span className="host-badge">HOST</span>}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                             <span className={`status-dot ${hostConnected ? 'connected' : 'disconnected'}`}></span>
@@ -456,7 +459,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 600 }}>
                                     {name}
-                                    {isThisUserHost && <span className="host-badge">[HOST]</span>}
+                                    {isThisUserHost && <span className="host-badge">HOST</span>}
                                 </div>
                                 {stream && <ParticipantAudio stream={stream} />}
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
