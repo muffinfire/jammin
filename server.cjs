@@ -255,7 +255,7 @@ wss.on('connection', (ws) => {
               const namePart = creatorName.split(' ')[0];
               const initials = namePart.substring(0, 2).toUpperCase();
 
-              const shortName = `Rec-${initials}-${timeStr}`;
+              const shortName = `${initials}-${timeStr}`;
 
               // Create the final recording with consistent ID
               const finalRecording = {
