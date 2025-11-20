@@ -250,9 +250,10 @@ wss.on('connection', (ws) => {
               const date = new Date();
               const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).toLowerCase().replace(/\s/g, '');
 
-              // Get initials from username (e.g. "Adam Baumgartner" -> "AB", "Dave" -> "D")
+              // Get first two letters of the first name (e.g. "Adam" -> "AD", "Adam Baumgartner" -> "AD")
               const creatorName = longestRecording.username || 'Unknown';
-              const initials = creatorName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+              const namePart = creatorName.split(' ')[0];
+              const initials = namePart.substring(0, 2).toUpperCase();
 
               const shortName = `Rec-${initials}-${timeStr}`;
 
@@ -314,14 +315,15 @@ wss.on('connection', (ws) => {
 
       case 'rename-recording': {
         if (room) {
-          const rec = room.recordings.find(r => r.id === data.id);
+          // Client sends recordingId, not id
+          const recId = data.recordingId || data.id;
+          const rec = room.recordings.find(r => r.id === recId);
           if (rec) {
-            // rec.id = data.newName; // DON'T change the ID, it breaks future lookups
             rec.name = data.newName;
 
             broadcast(room, {
               type: 'update-recording',
-              recordingId: data.id,
+              recordingId: recId,
               newName: data.newName
             });
           }
@@ -331,10 +333,12 @@ wss.on('connection', (ws) => {
 
       case 'delete-recording': {
         if (room) {
-          room.recordings = room.recordings.filter(r => r.id !== data.id);
+          // Client sends recordingId, not id
+          const recId = data.recordingId || data.id;
+          room.recordings = room.recordings.filter(r => r.id !== recId);
           broadcast(room, {
             type: 'delete-recording',
-            recordingId: data.id
+            recordingId: recId
           });
         }
         break;
