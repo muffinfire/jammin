@@ -417,7 +417,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>SESSION CODE</div>
                     <div className="session-code-container">
                         <span className="session-code">{sessionCode}</span>
-                        <button onClick={handleCopyLink} className="btn-icon" title="Copy Link">🔗</button>
+                        <button onClick={handleCopyLink} className="btn-icon" title="Copy Link">COPY LINK</button>
                     </div>
                 </div>
                 <button onClick={onLeave} className="btn-danger">LEAVE</button>
@@ -475,9 +475,9 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                                     </button>
                                     <button
                                         className="btn-danger btn-small"
-                                        onClick={() => wsRef.current && wsRef.current.send(JSON.stringify({ type: 'ban-user', targetId: id }))}
+                                        onClick={() => wsRef.current && wsRef.current.send(JSON.stringify({ type: 'kick-user', targetId: id }))}
                                     >
-                                        BAN
+                                        KICK
                                     </button>
                                 </div>
                             )}
@@ -490,7 +490,7 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                 <h3>RECORDINGS ({recordings.length})</h3>
                 {recordings.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-state-icon">🎼</div>
+                        <div className="empty-state-icon">🎵</div>
                         <div>NO RECORDINGS</div>
                     </div>
                 ) : (
@@ -509,16 +509,16 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                                                         onChange={(e) => setTempName(e.target.value)}
                                                         className="input-field-small"
                                                     />
-                                                    <button onClick={() => saveName(rec.id)} className="btn-success btn-small">✓</button>
-                                                    <button onClick={() => setEditingNameId(null)} className="btn-danger btn-small">✕</button>
+                                                    <button onClick={() => saveName(rec.id)} className="btn-success btn-small">SAVE</button>
+                                                    <button onClick={() => setEditingNameId(null)} className="btn-danger btn-small">CANCEL</button>
                                                 </div>
                                             ) : (
                                                 <>
                                                     {rec.name || `rec-${new Date(rec.timestamp || Date.now()).toLocaleTimeString().replace(/:/g, '')}`}
-                                                    <button className="btn-icon" onClick={() => startEditing(rec)}>✏️</button>
+                                                    <button className="btn-icon" onClick={() => startEditing(rec)}>EDIT</button>
                                                     <button className="btn-icon" style={{ color: 'var(--danger-color)' }} onClick={() => {
                                                         if (confirm('DELETE?') && wsRef.current) wsRef.current.send(JSON.stringify({ type: 'delete-recording', id: rec.id }));
-                                                    }}>🗑️</button>
+                                                    }}>DELETE</button>
                                                 </>
                                             )}
                                         </div>

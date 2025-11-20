@@ -28,7 +28,7 @@ const Home = ({ onJoin, onCreate }) => {
 
     return (
         <div className="home-container">
-            <h1 className="title">JAM SESSION</h1>
+
 
             <div className="form-group">
                 <label>YOUR NAME</label>

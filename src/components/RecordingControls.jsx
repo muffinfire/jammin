@@ -20,28 +20,31 @@ const RecordingControls = ({
     return (
         <div className="recording-controls">
             <div className="control-group">
-                <label>QUALITY</label>
-                <select
-                    value={audioQuality}
-                    onChange={(e) => setAudioQuality(e.target.value)}
-                    disabled={recordingState === 'recording'}
-                    className="quality-select"
-                >
-                    {Object.entries(QUALITY_PRESETS).map(([key, preset]) => (
-                        <option key={key} value={key}>{preset.label}</option>
-                    ))}
-                </select>
+                <label className="control-label">AUDIO QUALITY</label>
+                <div className="select-wrapper">
+                    <select
+                        value={audioQuality}
+                        onChange={(e) => setAudioQuality(e.target.value)}
+                        disabled={recordingState === 'recording'}
+                        className="quality-select"
+                    >
+                        {Object.entries(QUALITY_PRESETS).map(([key, preset]) => (
+                            <option key={key} value={key}>{preset.label}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             <div className="control-actions">
                 {recordingState === 'recording' ? (
-                    <button onClick={onStopRecording} className="btn-danger btn-large">
-                        <span className="recording-indicator"></span>
-                        STOP
+                    <button onClick={onStopRecording} className="btn-record stop">
+                        <div className="stop-icon"></div>
+                        STOP RECORDING
                     </button>
                 ) : (
-                    <button onClick={onStartRecording} className="btn-success btn-large">
-                        ● REC
+                    <button onClick={onStartRecording} className="btn-record start">
+                        <div className="record-icon"></div>
+                        START RECORDING
                     </button>
                 )}
                 <div className="timer-display">{formatTime(recordingTime)}</div>

@@ -32,10 +32,7 @@ const App = () => {
 
     return (
         <div className="container">
-            <header className="header">
-                <h1>Jam Session</h1>
-                <p>Real-time Collaboration</p>
-            </header>
+
             <main className="main">
                 {!sessionCode ? (
                     <Home onJoin={handleJoin} onCreate={handleCreate} />
