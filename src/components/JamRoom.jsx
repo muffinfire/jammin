@@ -247,6 +247,10 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                         setRecordings(recordingsWithBlobs);
                     }
 
+                    if (data.messages) {
+                        setMessages(data.messages);
+                    }
+
                     for (const userId of data.users) {
                         const newPc = createPeerConnection(userId, localStream);
                         const offer = await newPc.createOffer();

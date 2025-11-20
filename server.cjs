@@ -155,6 +155,7 @@ wss.on('connection', (ws) => {
           users: existingClientIds,
           participants: newRoom.participants,
           recordings: newRoom.recordings,
+          messages: newRoom.messages, // Added messages to room-state
           recording: {
             state: newRoom.recordingState,
             startTime: newRoom.recordingStartTime
@@ -265,12 +266,15 @@ wss.on('connection', (ws) => {
 
       case 'chat': {
         if (room) {
-          broadcast(room, {
-            type: 'chat',
-            from: clientId,
-            username: clientInfo.username,
+          const chatMessage = {
+            username: data.username || clients.get(ws)?.username || 'Unknown',
             message: data.message,
             timestamp: Date.now()
+          };
+          room.messages.push(chatMessage);
+          broadcast(room, {
+            type: 'chat',
+            ...chatMessage
           });
         }
         break;

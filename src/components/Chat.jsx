@@ -12,17 +12,7 @@ const Chat = ({ messages, onSendMessage }) => {
     };
 
     useEffect(() => {
-        if (messages.length === 0) return; // Don't scroll on initial load
-
-        const container = messagesContainerRef.current;
-        if (!container) return;
-
-        // Only auto-scroll if user is near the bottom (within 100px)
-        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-
-        if (isNearBottom) {
-            scrollToBottom();
-        }
+        scrollToBottom();
     }, [messages]);
 
     const handleSubmit = (e) => {

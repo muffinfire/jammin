@@ -43,7 +43,7 @@ const Home = ({ onJoin, onCreate }) => {
                     />
                 </div>
 
-                <div className="form-mode-toggle">
+                <div className="form-mode-toggle" data-mode={mode}>
                     <button
                         type="button"
                         className={`mode-btn ${mode === 'create' ? 'active' : ''}`}
