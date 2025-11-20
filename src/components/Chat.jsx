@@ -2,12 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 
 const Chat = ({ messages, onSendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
-    const messagesEndRef = useRef(null);
-    const messagesContainerRef = useRef(null);
-
     const scrollToBottom = () => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        if (messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            container.scrollTop = container.scrollHeight;
         }
     };
 
@@ -58,7 +56,7 @@ const Chat = ({ messages, onSendMessage }) => {
                         </div>
                     ))
                 )}
-                <div ref={messagesEndRef} />
+                <div />
             </div>
             <form onSubmit={handleSubmit} className="chat-input-form">
                 <input
