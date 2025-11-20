@@ -312,6 +312,12 @@
       margin-bottom: 0.5rem;
       opacity: 0.5;
     }
+
+    .btn-icon {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-left: 0.5rem;
+    }
   </style>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -356,7 +362,8 @@
         }
       };
 
-      useEffect(scrollToBottom, [messages]);
+      // Removed auto-scroll useEffect
+      // useEffect(scrollToBottom, [messages]);
 
       const handleSubmit = (e) => {
         e.preventDefault();
@@ -479,6 +486,7 @@
       const [participants, setParticipants] = useState(new Map());
       const [localStream, setLocalStream] = useState(null);
       const [audioQuality, setAudioQuality] = useState('high');
+      const audioQualityRef = useRef('high'); // Ref to avoid stale closure
       const [messages, setMessages] = useState([]);
 
       const wsRef = useRef(null);
@@ -507,6 +515,11 @@
         mixedDestinationNodeRef.current = mixedAudioContextRef.current.createMediaStreamDestination();
       }, []);
 
+      // Update ref when state changes
+      useEffect(() => {
+        audioQualityRef.current = audioQuality;
+      }, [audioQuality]);
+
       const convertToFormat = async (webmBlob, format) => {
         return new Promise((resolve) => {
           const audioContext = new AudioContext();
@@ -520,7 +533,7 @@
               if (format === 'wav') {
                 const wav = audioBufferToWav(audioBuffer);
                 resolve(new Blob([wav], { type: 'audio/wav' }));
-              } else if (format === 'mp3') {
+              } else {
                 resolve(webmBlob);
               }
             } catch (err) {
@@ -582,7 +595,7 @@
         // Store when I started recording locally
         recordingStartTimeRef.current = Date.now();
 
-        const qualitySettings = QUALITY_PRESETS[audioQuality];
+        const qualitySettings = QUALITY_PRESETS[audioQualityRef.current];
         mediaRecorderRef.current = new MediaRecorder(streamToRecord, {
           mimeType: 'audio/webm;codecs=opus',
           audioBitsPerSecond: qualitySettings.audioBitsPerSecond
@@ -622,7 +635,7 @@
         setRecordingTime(elapsed > 0 ? elapsed : 0);
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
-      }, [audioQuality, username]);
+      }, [username]); // Removed audioQuality from deps since we use ref
 
       const stopLocalRecording = useCallback(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -769,6 +782,16 @@
                 timestamp: data.timestamp
               }]);
               break;
+
+            case 'update-recording':
+              setRecordings(prev => prev.map(r =>
+                r.id === data.recordingId ? { ...r, name: data.newName } : r
+              ));
+              break;
+
+            case 'delete-recording':
+              setRecordings(prev => prev.filter(r => r.id !== data.recordingId));
+              break;
           }
         };
 
@@ -813,7 +836,7 @@
         }
 
         let blob = recording.audioBlob;
-        let filename = `${recording.id}.${format}`;
+        let filename = `${recording.name || recording.id}.${format}`;
 
         if (format !== 'webm') {
           blob = await convertToFormat(recording.audioBlob, format);
@@ -867,7 +890,7 @@
                   wsRef.current.send(JSON.stringify({ type: 'start-recording' }));
                 }
               }} className="btn-success">
-                ⏺ Start Recording
+                Start Recording
               </button>
             )}
             <div className="timer">{formatTime(recordingTime)}</div>
@@ -898,9 +921,19 @@
                       <div style={{ fontWeight: 600 }}>{name}</div>
                       {stream && <ParticipantAudio stream={stream} />}
                       <div style={{ fontSize: '0.85rem', color: stream ? '#10b981' : '#6b7280' }}>
-                        {stream ? '● Connected' : '○ Connecting...'}
+                        {stream ? 'Connected' : 'Connecting...'}
                       </div>
                     </div>
+                    <button
+                      className="btn-danger btn-small"
+                      onClick={() => {
+                        if (wsRef.current) {
+                          wsRef.current.send(JSON.stringify({ type: 'kick-user', targetId: id }));
+                        }
+                      }}
+                    >
+                      Kick
+                    </button>
                   </div>
                 );
               })
@@ -923,7 +956,37 @@
                   <div key={rec.id} className="recording-item">
                     <div className="recording-header">
                       <div>
-                        <div className="recording-title">{rec.id}</div>
+                        <div className="recording-title">
+                          {rec.name || rec.id}
+                          <button
+                            className="btn-secondary btn-small btn-icon"
+                            onClick={() => {
+                              const newName = prompt('Enter new name:', rec.name || rec.id);
+                              if (newName && wsRef.current) {
+                                wsRef.current.send(JSON.stringify({
+                                  type: 'rename-recording',
+                                  id: rec.id,
+                                  newName
+                                }));
+                              }
+                            }}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-danger btn-small btn-icon"
+                            onClick={() => {
+                              if (confirm('Delete this recording?') && wsRef.current) {
+                                wsRef.current.send(JSON.stringify({
+                                  type: 'delete-recording',
+                                  id: rec.id
+                                }));
+                              }
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        </div>
                         <div className="recording-duration">
                           Duration: {formatTime(rec.duration)} • {rec.timestamp}
                           {rec.quality && ` • ${rec.quality}`}
@@ -939,9 +1002,6 @@
                         </button>
                         <button onClick={() => handleDownload(rec, 'wav')} className="btn-secondary btn-small">
                           💾 WAV
-                        </button>
-                        <button onClick={() => handleDownload(rec, 'mp3')} className="btn-secondary btn-small">
-                          💾 MP3
                         </button>
                       </div>
                     )}

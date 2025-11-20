@@ -41,11 +41,11 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message) => {
     let data;
-    try { 
-      data = JSON.parse(message); 
-    } catch (e) { 
+    try {
+      data = JSON.parse(message);
+    } catch (e) {
       console.error('Invalid JSON:', e);
-      return; 
+      return;
     }
 
     const clientInfo = clients.get(ws);
@@ -58,14 +58,14 @@ wss.on('connection', (ws) => {
       case 'join': {
         const newRoomCode = data.code;
         const username = data.username || 'Anonymous';
-        
+
         clientInfo.room = newRoomCode;
         clientInfo.username = username;
-        
+
         if (!rooms.has(newRoomCode)) {
-          rooms.set(newRoomCode, { 
-            clients: new Set(), 
-            recordingState: 'idle', 
+          rooms.set(newRoomCode, {
+            clients: new Set(),
+            recordingState: 'idle',
             recordingStartTime: null,
             participants: {},
             recordings: [],
@@ -73,12 +73,12 @@ wss.on('connection', (ws) => {
             pendingRecordings: []
           });
         }
-        
+
         const newRoom = rooms.get(newRoomCode);
-        
+
         // Add participant to room
         newRoom.participants[clientId] = username;
-        
+
         // Get existing client IDs (excluding the new joiner)
         const existingClientIds = Array.from(newRoom.clients)
           .map(clientWs => {
@@ -86,16 +86,16 @@ wss.on('connection', (ws) => {
             return info ? info.id : null;
           })
           .filter(id => id);
-        
+
         // Notify others about new user
-        broadcast(newRoom, { 
-          type: 'user-joined', 
+        broadcast(newRoom, {
+          type: 'user-joined',
           id: clientId,
           username: username
         }, ws);
-        
+
         newRoom.clients.add(ws);
-        
+
         // Send room state to new user (including their own ID)
         ws.send(JSON.stringify({
           type: 'room-state',
@@ -103,18 +103,18 @@ wss.on('connection', (ws) => {
           users: existingClientIds,
           participants: newRoom.participants,
           recordings: newRoom.recordings,
-          recording: { 
-            state: newRoom.recordingState, 
-            startTime: newRoom.recordingStartTime 
+          recording: {
+            state: newRoom.recordingState,
+            startTime: newRoom.recordingStartTime
           }
         }));
-        
+
         console.log(`Client ${clientId} (${username}) joined room ${newRoomCode}. Size: ${newRoom.clients.size}`);
         break;
       }
-      
-      case 'offer': 
-      case 'answer': 
+
+      case 'offer':
+      case 'answer':
       case 'candidate': {
         if (!room) return;
         const targetId = data.id;
@@ -127,36 +127,36 @@ wss.on('connection', (ws) => {
         }
         break;
       }
-      
+
       case 'start-recording': {
         if (room && room.recordingState === 'idle') {
           room.recordingState = 'recording';
           room.recordingStartTime = Date.now();
           room.currentRecordingId = `recording-${Date.now()}`;
           room.pendingRecordings = [];
-          
-          broadcast(room, { 
-            type: 'recording-started', 
-            startTime: room.recordingStartTime 
+
+          broadcast(room, {
+            type: 'recording-started',
+            startTime: room.recordingStartTime
           });
           console.log(`Recording started in room ${roomCode} with ID ${room.currentRecordingId}`);
         }
         break;
       }
-      
+
       case 'stop-recording': {
         if (room && room.recordingState === 'recording') {
           room.recordingState = 'idle';
-          
-          broadcast(room, { 
+
+          broadcast(room, {
             type: 'recording-stopped'
           });
-          
+
           console.log(`Recording stopped in room ${roomCode}, waiting for submissions...`);
         }
         break;
       }
-      
+
       case 'submit-recording': {
         if (room && data.audioData) {
           // Store the submission
@@ -169,9 +169,9 @@ wss.on('connection', (ws) => {
             quality: data.quality,
             createdBy: data.createdBy
           });
-          
+
           console.log(`Received recording from ${clientInfo.username}: ${data.myDuration}s (of ${data.totalDuration}s total)`);
-          
+
           // Wait a bit to collect all submissions, then pick the longest
           setTimeout(() => {
             if (room.pendingRecordings.length > 0) {
@@ -179,9 +179,9 @@ wss.on('connection', (ws) => {
               const longestRecording = room.pendingRecordings.reduce((longest, current) => {
                 return current.myDuration > longest.myDuration ? current : longest;
               });
-              
+
               console.log(`Selected longest recording: ${longestRecording.myDuration}s from ${longestRecording.username}`);
-              
+
               // Create the final recording with consistent ID
               const finalRecording = {
                 id: room.currentRecordingId,
@@ -191,19 +191,19 @@ wss.on('connection', (ws) => {
                 quality: longestRecording.quality,
                 createdBy: `${longestRecording.createdBy} (${longestRecording.myDuration}s)`
               };
-              
+
               // Store it
               room.recordings.push(finalRecording);
-              
+
               // Broadcast to everyone
               broadcast(room, {
                 type: 'new-recording',
                 recording: finalRecording
               });
-              
+
               // Clear pending
               room.pendingRecordings = [];
-              
+
               console.log(`Recording ${finalRecording.id} finalized and broadcast`);
             }
           }, 2000); // Wait 2 seconds for all submissions
@@ -228,6 +228,56 @@ wss.on('connection', (ws) => {
         ws.send(JSON.stringify({ type: 'pong' }));
         break;
       }
+
+      case 'rename-recording': {
+        if (room) {
+          const rec = room.recordings.find(r => r.id === data.id);
+          if (rec) {
+            rec.id = data.newName; // Ideally we'd have a separate display name, but ID works for now if unique
+            // Or better, add a name field
+            rec.name = data.newName;
+
+            broadcast(room, {
+              type: 'update-recording',
+              recordingId: data.id,
+              newName: data.newName
+            });
+          }
+        }
+        break;
+      }
+
+      case 'delete-recording': {
+        if (room) {
+          room.recordings = room.recordings.filter(r => r.id !== data.id);
+          broadcast(room, {
+            type: 'delete-recording',
+            recordingId: data.id
+          });
+        }
+        break;
+      }
+
+      case 'kick-user': {
+        if (room) {
+          const targetId = data.targetId;
+          // Find the client WS
+          let targetWs = null;
+          for (const clientWs of room.clients) {
+            const info = clients.get(clientWs);
+            if (info && info.id === targetId) {
+              targetWs = clientWs;
+              break;
+            }
+          }
+
+          if (targetWs) {
+            targetWs.close(1000, 'Kicked by host');
+            // The close handler will take care of broadcasting user-left
+          }
+        }
+        break;
+      }
     }
   });
 
@@ -237,15 +287,15 @@ wss.on('connection', (ws) => {
       const room = rooms.get(clientInfo.room);
       if (room) {
         room.clients.delete(ws);
-        
+
         // Remove from participants
         delete room.participants[clientInfo.id];
-        
-        broadcast(room, { 
-          type: 'user-left', 
-          id: clientInfo.id 
+
+        broadcast(room, {
+          type: 'user-left',
+          id: clientInfo.id
         });
-        
+
         if (room.clients.size === 0) {
           rooms.delete(clientInfo.room);
           console.log(`Room ${clientInfo.room} deleted (empty)`);
