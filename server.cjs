@@ -210,6 +210,24 @@ wss.on('connection', (ws) => {
         }
         break;
       }
+
+      case 'chat': {
+        if (room) {
+          broadcast(room, {
+            type: 'chat',
+            from: clientId,
+            username: clientInfo.username,
+            message: data.message,
+            timestamp: Date.now()
+          });
+        }
+        break;
+      }
+
+      case 'ping': {
+        ws.send(JSON.stringify({ type: 'pong' }));
+        break;
+      }
     }
   });
 
