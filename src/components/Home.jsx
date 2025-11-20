@@ -3,70 +3,84 @@ import React, { useState, useEffect } from 'react';
 const Home = ({ onJoin, onCreate }) => {
     const [joinCode, setJoinCode] = useState('');
     const [username, setUsername] = useState('');
+    const [mode, setMode] = useState('create'); // 'create' or 'join'
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const room = params.get('room');
         if (room) {
             setJoinCode(room);
+            setMode('join');
         }
     }, []);
 
-    const handleJoinSubmit = (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        if (joinCode.trim() && username.trim()) {
-            onJoin(joinCode.trim(), username.trim());
-        }
-    };
+        if (!username.trim()) return;
 
-    const handleCreateSubmit = (e) => {
-        e.preventDefault();
-        if (username.trim()) {
+        if (mode === 'create') {
             onCreate(username.trim());
+        } else {
+            if (joinCode.trim()) {
+                onJoin(joinCode.trim(), username.trim());
+            }
         }
     };
 
     return (
         <div className="home-container">
+            <h1 className="home-title">JAM SESSION</h1>
 
+            <form onSubmit={handleSubmit} className="home-form">
+                <div className="form-row">
+                    <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Your Name"
+                        className="input-field"
+                        required
+                    />
+                </div>
 
-            <div className="form-group">
-                <label>YOUR NAME</label>
-                <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="ENTER NAME"
-                    className="input-field"
-                />
-            </div>
+                <div className="form-mode-toggle">
+                    <button
+                        type="button"
+                        className={`mode-btn ${mode === 'create' ? 'active' : ''}`}
+                        onClick={() => setMode('create')}
+                    >
+                        NEW SESSION
+                    </button>
+                    <button
+                        type="button"
+                        className={`mode-btn ${mode === 'join' ? 'active' : ''}`}
+                        onClick={() => setMode('join')}
+                    >
+                        JOIN SESSION
+                    </button>
+                </div>
 
-            <div className="actions-container">
-                <div className="action-box">
-                    <h3>JOIN SESSION</h3>
-                    <form onSubmit={handleJoinSubmit}>
+                {mode === 'join' && (
+                    <div className="form-row">
                         <input
                             type="text"
                             value={joinCode}
                             onChange={(e) => setJoinCode(e.target.value)}
-                            placeholder="SESSION CODE"
+                            placeholder="Session Code"
                             className="input-field"
+                            required
                         />
-                        <button type="submit" className="btn-secondary" disabled={!joinCode.trim() || !username.trim()}>
-                            JOIN
-                        </button>
-                    </form>
-                </div>
+                    </div>
+                )}
 
-                <div className="divider-vertical">OR</div>
-
-                <div className="action-box">
-                    <h3>NEW SESSION</h3>
-                    <button onClick={handleCreateSubmit} className="btn-primary" disabled={!username.trim()}>
-                        CREATE
-                    </button>
-                </div>
-            </div>
+                <button
+                    type="submit"
+                    className="btn-primary btn-large"
+                    disabled={!username.trim() || (mode === 'join' && !joinCode.trim())}
+                >
+                    {mode === 'create' ? 'CREATE' : 'JOIN'}
+                </button>
+            </form>
         </div>
     );
 };

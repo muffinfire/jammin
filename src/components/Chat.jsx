@@ -4,13 +4,15 @@ const Chat = ({ messages, onSendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef(null);
 
-    // Auto-scroll removed as requested
-    // const scrollToBottom = () => {
-    //   if (messagesEndRef.current) {
-    //     messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    //   }
-    // };
-    // useEffect(scrollToBottom, [messages]);
+    const scrollToBottom = () => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -18,6 +20,25 @@ const Chat = ({ messages, onSendMessage }) => {
             onSendMessage(newMessage.trim());
             setNewMessage('');
         }
+    };
+
+    // Generate a consistent color for each username
+    const getUserColor = (username) => {
+        const colors = [
+            '#3b82f6', // blue
+            '#10b981', // green
+            '#f59e0b', // amber
+            '#ef4444', // red
+            '#8b5cf6', // purple
+            '#ec4899', // pink
+            '#14b8a6', // teal
+            '#f97316', // orange
+        ];
+        let hash = 0;
+        for (let i = 0; i < username.length; i++) {
+            hash = username.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
     };
 
     return (
@@ -29,7 +50,9 @@ const Chat = ({ messages, onSendMessage }) => {
                 ) : (
                     messages.map((msg, idx) => (
                         <div key={idx} className="chat-message">
-                            <span className="chat-username">{msg.username}</span>
+                            <span className="chat-username" style={{ color: getUserColor(msg.username) }}>
+                                {msg.username}
+                            </span>
                             <span className="chat-text">{msg.message}</span>
                         </div>
                     ))

@@ -483,7 +483,9 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
                 <h3>RECORDINGS ({recordings.length})</h3>
                 {recordings.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-state-icon">🎵</div>
+                        <svg className="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9 18V5l12-2v13M9 18c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3zm12-2c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z" />
+                        </svg>
                         <div>NO RECORDINGS</div>
                     </div>
                 ) : (
