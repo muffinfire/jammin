@@ -214,7 +214,13 @@ const JamRoom = ({ sessionCode, username, isHost, onLeave, onKicked }) => {
             return pc;
         };
 
-        ws.onopen = () => ws.send(JSON.stringify({ type: 'join', code: sessionCode, username, isHost }));
+        ws.onopen = () => ws.send(JSON.stringify({
+            type: 'join',
+            code: sessionCode,
+            username,
+            isHost,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }));
 
         ws.onmessage = async (message) => {
             const data = JSON.parse(message.data);

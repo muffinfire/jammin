@@ -93,9 +93,11 @@ wss.on('connection', (ws) => {
         const newRoomCode = data.code;
         const username = data.username || 'Anonymous';
         const isHost = data.isHost;
+        const timezone = data.timezone || 'UTC';
 
         clientInfo.room = newRoomCode;
         clientInfo.username = username;
+        clientInfo.timezone = timezone;
 
         if (!rooms.has(newRoomCode)) {
           console.log(`Creating new room: ${newRoomCode}`);
@@ -246,9 +248,27 @@ wss.on('connection', (ws) => {
 
               console.log(`Selected longest recording: ${longestRecording.myDuration}s from ${longestRecording.username}`);
 
-              // Generate short name: Rec-Initials-Time
+              // Find host's timezone
+              let hostTimezone = 'UTC';
+              if (room.hostId) {
+                for (const clientWs of room.clients) {
+                  const info = clients.get(clientWs);
+                  if (info && info.id === room.hostId) {
+                    hostTimezone = info.timezone;
+                    break;
+                  }
+                }
+              }
+
+              // Generate short name: Initials-Time (Host's Timezone)
               const date = new Date();
-              const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).toUpperCase().replace(/\s/g, '');
+              const timeStr = date.toLocaleTimeString('en-US', {
+                timeZone: hostTimezone,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+              }).toUpperCase().replace(/\s/g, '');
 
               // Get first two letters of the first name (e.g. "Adam" -> "AD", "Adam Baumgartner" -> "AD")
               const creatorName = longestRecording.username || 'Unknown';
